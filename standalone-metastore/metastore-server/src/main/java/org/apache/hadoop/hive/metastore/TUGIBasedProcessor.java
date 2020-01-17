@@ -25,12 +25,12 @@ import java.security.PrivilegedExceptionAction;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.hadoop.hive.metastore.api.ThriftHiveMetastore;
+import org.apache.hadoop.hive.metastore.api.ThriftHiveMultitenantMetastore;
 import org.apache.hadoop.hive.metastore.security.TUGIContainingTransport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.hive.metastore.api.ThriftHiveMetastore.Iface;
+import org.apache.hadoop.hive.metastore.api.ThriftHiveMultitenantMetastore.Iface;
 import org.apache.hadoop.hive.metastore.api.ThriftHiveMetastore.set_ugi_args;
 import org.apache.hadoop.hive.metastore.api.ThriftHiveMetastore.set_ugi_result;
 import org.apache.hadoop.security.UserGroupInformation;
@@ -90,7 +90,7 @@ public class TUGIBasedProcessor<I extends Iface> extends TSetIpAddressProcessor<
     // Store ugi in transport if the rpc is set_ugi
     if (msg.name.equalsIgnoreCase("set_ugi")){
       try {
-        handleSetUGI(ugiTrans, (ThriftHiveMetastore.Processor.set_ugi<Iface>)fn, msg, in, out);
+        handleSetUGI(ugiTrans, (ThriftHiveMultitenantMetastore.Processor.set_ugi<Iface>)fn, msg, in, out);
       } catch (TException e) {
         throw e;
       } catch (Exception e) {
@@ -138,7 +138,7 @@ public class TUGIBasedProcessor<I extends Iface> extends TSetIpAddressProcessor<
   }
 
   private void handleSetUGI(TUGIContainingTransport ugiTrans,
-                            ThriftHiveMetastore.Processor.set_ugi<Iface> fn, TMessage msg, TProtocol iprot, TProtocol oprot)
+                            ThriftHiveMultitenantMetastore.Processor.set_ugi<Iface> fn, TMessage msg, TProtocol iprot, TProtocol oprot)
       throws TException, SecurityException, NoSuchMethodException, IllegalArgumentException,
       IllegalAccessException, InvocationTargetException{
 

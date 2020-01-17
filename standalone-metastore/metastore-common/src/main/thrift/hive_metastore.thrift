@@ -2668,3 +2668,14 @@ const string TABLE_BUCKETING_VERSION = "bucketing_version",
 const string DRUID_CONFIG_PREFIX = "druid.",
 const string JDBC_CONFIG_PREFIX = "hive.sql.",
 
+
+/**
+* This interface is live.
+*/
+service ThriftHiveMultitenantMetastore extends ThriftHiveMetastore
+{
+  void create_database(1:Database database, 2:string workspaceName) throws(1:AlreadyExistsException o1, 2:InvalidObjectException o2, 3:MetaException o3)
+  Database get_database(1:string name, 2:string workspaceName) throws(1:NoSuchObjectException o1, 2:MetaException o2)
+  void drop_database(1:string name, 2:bool deleteData, 3:bool cascade, 4:string workspaceName) throws(1:NoSuchObjectException o1, 2:InvalidOperationException o2, 3:MetaException o3)
+  void alter_database(1:string dbname, 2:Database db, 3:string workspaceName) throws(1:MetaException o1, 2:NoSuchObjectException o2)
+}

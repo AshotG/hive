@@ -22,8 +22,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.Socket;
 
 import org.apache.hadoop.hive.metastore.HiveMetaStore.HMSHandler;
-import org.apache.hadoop.hive.metastore.api.ThriftHiveMetastore;
-import org.apache.hadoop.hive.metastore.api.ThriftHiveMetastore.Iface;
+import org.apache.hadoop.hive.metastore.api.ThriftHiveMultitenantMetastore;
+import org.apache.hadoop.hive.metastore.api.ThriftHiveMultitenantMetastore.Iface;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TSocket;
@@ -32,7 +32,7 @@ import org.apache.thrift.transport.TTransport;
 /**
  * TSetIpAddressProcessor passes the IP address of the Thrift client to the HMSHandler.
  */
-public class TSetIpAddressProcessor<I extends Iface> extends ThriftHiveMetastore.Processor<Iface> {
+public class TSetIpAddressProcessor<I extends Iface> extends ThriftHiveMultitenantMetastore.Processor<Iface> {
 
   @SuppressWarnings("unchecked")
   public TSetIpAddressProcessor(I iface) throws SecurityException, NoSuchFieldException,

@@ -206,7 +206,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 /**
  * TODO:pc remove application logic to a separate interface.
  */
-public class HiveMetaStore extends ThriftHiveMetastore {
+public class HiveMetaStore extends ThriftHiveMultitenantMetastore {
   public static final Logger LOG = LoggerFactory.getLogger(HiveMetaStore.class);
   public static final String PARTITION_NUMBER_EXCEED_LIMIT_MSG =
       "Number of partitions scanned (=%d) on table '%s' exceeds limit (=%d). This is controlled on the metastore server by %s.";
@@ -1458,6 +1458,12 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     }
 
     @Override
+    public void create_database(final Database db, final String workspaceName)
+        throws AlreadyExistsException, InvalidObjectException, MetaException {
+      create_database(db);
+    }
+
+    @Override
     public void create_database(final Database db)
         throws AlreadyExistsException, InvalidObjectException, MetaException {
       startFunction("create_database", ": " + db.toString());
@@ -1494,6 +1500,12 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       } finally {
         endFunction("create_database", success, ex);
       }
+    }
+
+    @Override
+    public Database get_database(final String name, final String workspaceName)
+        throws NoSuchObjectException, MetaException {
+      return get_database(name);
     }
 
     @Override
@@ -1550,6 +1562,11 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         endFunction("get_database", db != null, ex);
       }
       return db;
+    }
+
+    @Override
+    public void alter_database(final String dbName, final Database newDB, final String workspaceName) throws TException {
+      alter_database(dbName, newDB);
     }
 
     @Override
@@ -1791,6 +1808,12 @@ public class HiveMetaStore extends ThriftHiveMetastore {
                                                 transactionalListenerResponses, ms);
         }
       }
+    }
+
+    @Override
+    public void drop_database(final String dbName, final boolean deleteData, final boolean cascade, final String workspaceName)
+        throws NoSuchObjectException, InvalidOperationException, MetaException {
+      drop_database(dbName, deleteData, cascade);
     }
 
     @Override
@@ -10016,7 +10039,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     if (useSasl) {
       processor = saslServer.wrapProcessor(
-        new ThriftHiveMetastore.Processor<>(handler));
+        new ThriftHiveMultitenantMetastore.Processor<>(handler));
       LOG.info("Starting DB backed MetaStore Server in Secure Mode");
     } else {
       // we are in unsecure mode.

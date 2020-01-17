@@ -27,7 +27,7 @@ import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.RequestPartsSpec;
 import org.apache.hadoop.hive.metastore.api.Table;
-import org.apache.hadoop.hive.metastore.api.ThriftHiveMetastore;
+import org.apache.hadoop.hive.metastore.api.ThriftHiveMultitenantMetastore;
 import org.apache.hadoop.hive.metastore.conf.MetastoreConf;
 import org.apache.hadoop.hive.metastore.security.HadoopThriftAuthBridge;
 import org.apache.hadoop.hive.metastore.utils.MetaStoreUtils;
@@ -72,7 +72,7 @@ final class HMSClient implements AutoCloseable {
   private static final String PRINCIPAL_KEY = "hive.metastore.kerberos.principal";
 
   private final String confDir;
-  private ThriftHiveMetastore.Iface client;
+  private ThriftHiveMultitenantMetastore.Iface client;
   private TTransport transport;
   private URI serverURI;
 
@@ -391,7 +391,7 @@ final class HMSClient implements AutoCloseable {
     } else {
       protocol = new TBinaryProtocol(transport);
     }
-    client = new ThriftHiveMetastore.Client(protocol);
+    client = new ThriftHiveMultitenantMetastore.Client(protocol);
     if (!transport.isOpen()) {
       transport.open();
       LOG.info("Opened a connection to metastore, current connections");

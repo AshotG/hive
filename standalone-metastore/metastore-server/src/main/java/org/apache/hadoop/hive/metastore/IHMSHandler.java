@@ -26,7 +26,7 @@ import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.Table;
-import org.apache.hadoop.hive.metastore.api.ThriftHiveMetastore;
+import org.apache.hadoop.hive.metastore.api.ThriftHiveMultitenantMetastore;
 import org.apache.hadoop.hive.metastore.txn.TxnStore;
 import org.apache.hadoop.hive.metastore.utils.MetaStoreUtils;
 
@@ -35,7 +35,7 @@ import org.apache.hadoop.hive.metastore.utils.MetaStoreUtils;
  * called by internal classes but that are not part of the thrift interface.
  */
 @InterfaceAudience.Private
-public interface IHMSHandler extends ThriftHiveMetastore.Iface, Configurable {
+public interface IHMSHandler extends ThriftHiveMultitenantMetastore.Iface, Configurable {
 
   void init() throws MetaException;
 
