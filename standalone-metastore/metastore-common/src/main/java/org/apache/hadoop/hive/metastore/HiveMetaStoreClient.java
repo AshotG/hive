@@ -119,7 +119,7 @@ public class HiveMetaStoreClient implements IMetaStoreClient, AutoCloseable {
   // HiveMetaStore.newRetryingHMSHandler("hive client", this.conf, true);
   private static final String HIVE_METASTORE_CREATE_HANDLER_METHOD = "newRetryingHMSHandler";
 
-  ThriftHiveMultitenantMetastore.Iface client = null;
+  ThriftHiveMetastore.Iface client = null;
   private TTransport transport = null;
   private boolean isConnected = false;
   private URI metastoreUris[];
@@ -264,7 +264,7 @@ public class HiveMetaStoreClient implements IMetaStoreClient, AutoCloseable {
    * @return embedded client instance
    * @throws MetaException
    */
-  static ThriftHiveMultitenantMetastore.Iface callEmbeddedMetastore(Configuration conf) throws MetaException {
+  static ThriftHiveMetastore.Iface callEmbeddedMetastore(Configuration conf) throws MetaException {
     // Instantiate the metastore server handler directly instead of connecting
     // through the network
     //
@@ -281,7 +281,7 @@ public class HiveMetaStoreClient implements IMetaStoreClient, AutoCloseable {
       Method method = clazz.getDeclaredMethod(HIVE_METASTORE_CREATE_HANDLER_METHOD,
           Configuration.class);
       method.setAccessible(true);
-      return (ThriftHiveMultitenantMetastore.Iface) method.invoke(null, conf);
+      return (ThriftHiveMetastore.Iface) method.invoke(null, conf);
     } catch (InvocationTargetException e) {
       if (e.getCause() != null) {
         MetaStoreUtils.logAndThrowMetaException((Exception) e.getCause());
@@ -680,7 +680,7 @@ public class HiveMetaStoreClient implements IMetaStoreClient, AutoCloseable {
           } else {
             protocol = new TBinaryProtocol(transport);
           }
-          client = new ThriftHiveMultitenantMetastore.Client(protocol);
+          client = new ThriftHiveMetastore.Client(protocol);
           try {
             if (!transport.isOpen()) {
               transport.open();
@@ -852,7 +852,7 @@ public class HiveMetaStoreClient implements IMetaStoreClient, AutoCloseable {
    * @throws AlreadyExistsException
    * @throws MetaException
    * @throws TException
-   * @see org.apache.hadoop.hive.metastore.api.ThriftHiveMultitenantMetastore.Iface#add_partition(org.apache.hadoop.hive.metastore.api.Partition)
+   * @see org.apache.hadoop.hive.metastore.api.ThriftHiveMetastore.Iface#add_partition(org.apache.hadoop.hive.metastore.api.Partition)
    */
   @Override
   public Partition add_partition(Partition new_part) throws TException {
@@ -874,7 +874,7 @@ public class HiveMetaStoreClient implements IMetaStoreClient, AutoCloseable {
    * @throws AlreadyExistsException
    * @throws MetaException
    * @throws TException
-   * @see org.apache.hadoop.hive.metastore.api.ThriftHiveMultitenantMetastore.Iface#add_partitions(List)
+   * @see org.apache.hadoop.hive.metastore.api.ThriftHiveMetastore.Iface#add_partitions(List)
    */
   @Override
   public int add_partitions(List<Partition> new_parts) throws TException {
@@ -1063,7 +1063,7 @@ public class HiveMetaStoreClient implements IMetaStoreClient, AutoCloseable {
    * @throws InvalidObjectException
    * @throws MetaException
    * @throws TException
-   * @see org.apache.hadoop.hive.metastore.api.ThriftHiveMultitenantMetastore.Iface#create_database(Database)
+   * @see org.apache.hadoop.hive.metastore.api.ThriftHiveMetastore.Iface#create_database(Database)
    */
   @Override
   public void createDatabase(Database db)
@@ -1079,7 +1079,7 @@ public class HiveMetaStoreClient implements IMetaStoreClient, AutoCloseable {
    * @throws MetaException
    * @throws NoSuchObjectException
    * @throws TException
-   * @see org.apache.hadoop.hive.metastore.api.ThriftHiveMultitenantMetastore.Iface#create_table(org.apache.hadoop.hive.metastore.api.CreateTableRequest)
+   * @see org.apache.hadoop.hive.metastore.api.ThriftHiveMetastore.Iface#create_table(org.apache.hadoop.hive.metastore.api.CreateTableRequest)
    */
   @Override
   public void createTable(Table tbl) throws AlreadyExistsException,
@@ -1294,7 +1294,7 @@ public class HiveMetaStoreClient implements IMetaStoreClient, AutoCloseable {
    * @throws InvalidObjectException
    * @throws MetaException
    * @throws TException
-   * @see org.apache.hadoop.hive.metastore.api.ThriftHiveMultitenantMetastore.Iface#create_type(org.apache.hadoop.hive.metastore.api.Type)
+   * @see org.apache.hadoop.hive.metastore.api.ThriftHiveMetastore.Iface#create_type(org.apache.hadoop.hive.metastore.api.Type)
    */
   public boolean createType(Type type) throws AlreadyExistsException,
       InvalidObjectException, MetaException, TException {
@@ -1307,7 +1307,7 @@ public class HiveMetaStoreClient implements IMetaStoreClient, AutoCloseable {
    * @throws InvalidOperationException
    * @throws MetaException
    * @throws TException
-   * @see org.apache.hadoop.hive.metastore.api.ThriftHiveMultitenantMetastore.Iface#drop_database(java.lang.String, boolean, boolean)
+   * @see org.apache.hadoop.hive.metastore.api.ThriftHiveMetastore.Iface#drop_database(java.lang.String, boolean, boolean)
    */
   @Override
   public void dropDatabase(String name)
@@ -1648,7 +1648,7 @@ public class HiveMetaStoreClient implements IMetaStoreClient, AutoCloseable {
    * @throws NoSuchObjectException         the table wasn't found
    * @throws TException                    a thrift communication error occurred
    * @throws UnsupportedOperationException dropping an index table is not allowed
-   * @see org.apache.hadoop.hive.metastore.api.ThriftHiveMultitenantMetastore.Iface#drop_table(java.lang.String,
+   * @see org.apache.hadoop.hive.metastore.api.ThriftHiveMetastore.Iface#drop_table(java.lang.String,
    * java.lang.String, boolean)
    */
   public void dropTable(String catName, String dbname, String name, boolean deleteData,
@@ -1731,7 +1731,7 @@ public class HiveMetaStoreClient implements IMetaStoreClient, AutoCloseable {
    * @return true if the type is dropped
    * @throws MetaException
    * @throws TException
-   * @see org.apache.hadoop.hive.metastore.api.ThriftHiveMultitenantMetastore.Iface#drop_type(java.lang.String)
+   * @see org.apache.hadoop.hive.metastore.api.ThriftHiveMetastore.Iface#drop_type(java.lang.String)
    */
   public boolean dropType(String type) throws NoSuchObjectException, MetaException, TException {
     return client.drop_type(type);
@@ -1742,7 +1742,7 @@ public class HiveMetaStoreClient implements IMetaStoreClient, AutoCloseable {
    * @return map of types
    * @throws MetaException
    * @throws TException
-   * @see org.apache.hadoop.hive.metastore.api.ThriftHiveMultitenantMetastore.Iface#get_type_all(java.lang.String)
+   * @see org.apache.hadoop.hive.metastore.api.ThriftHiveMetastore.Iface#get_type_all(java.lang.String)
    */
   public Map<String, Type> getTypeAll(String name) throws MetaException,
       TException {
@@ -2169,7 +2169,7 @@ public class HiveMetaStoreClient implements IMetaStoreClient, AutoCloseable {
    * @throws MetaException
    * @throws TException
    * @throws NoSuchObjectException
-   * @see org.apache.hadoop.hive.metastore.api.ThriftHiveMultitenantMetastore.Iface#get_type(java.lang.String)
+   * @see org.apache.hadoop.hive.metastore.api.ThriftHiveMetastore.Iface#get_type(java.lang.String)
    */
   public Type getType(String name) throws NoSuchObjectException, MetaException, TException {
     return deepCopy(client.get_type(name));

@@ -144,6 +144,23 @@ module ThriftHiveMetastore
       return
     end
 
+    def create_database_v2(database, workspaceName)
+      send_create_database_v2(database, workspaceName)
+      recv_create_database_v2()
+    end
+
+    def send_create_database_v2(database, workspaceName)
+      send_message('create_database_v2', Create_database_v2_args, :database => database, :workspaceName => workspaceName)
+    end
+
+    def recv_create_database_v2()
+      result = receive_message(Create_database_v2_result)
+      raise result.o1 unless result.o1.nil?
+      raise result.o2 unless result.o2.nil?
+      raise result.o3 unless result.o3.nil?
+      return
+    end
+
     def get_database(name)
       send_get_database(name)
       return recv_get_database()
@@ -159,6 +176,23 @@ module ThriftHiveMetastore
       raise result.o1 unless result.o1.nil?
       raise result.o2 unless result.o2.nil?
       raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'get_database failed: unknown result')
+    end
+
+    def get_database_v2(name, workspaceName)
+      send_get_database_v2(name, workspaceName)
+      return recv_get_database_v2()
+    end
+
+    def send_get_database_v2(name, workspaceName)
+      send_message('get_database_v2', Get_database_v2_args, :name => name, :workspaceName => workspaceName)
+    end
+
+    def recv_get_database_v2()
+      result = receive_message(Get_database_v2_result)
+      return result.success unless result.success.nil?
+      raise result.o1 unless result.o1.nil?
+      raise result.o2 unless result.o2.nil?
+      raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'get_database_v2 failed: unknown result')
     end
 
     def get_database_req(request)
@@ -178,6 +212,23 @@ module ThriftHiveMetastore
       raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'get_database_req failed: unknown result')
     end
 
+    def get_database_req_v2(request, workspaceName)
+      send_get_database_req_v2(request, workspaceName)
+      return recv_get_database_req_v2()
+    end
+
+    def send_get_database_req_v2(request, workspaceName)
+      send_message('get_database_req_v2', Get_database_req_v2_args, :request => request, :workspaceName => workspaceName)
+    end
+
+    def recv_get_database_req_v2()
+      result = receive_message(Get_database_req_v2_result)
+      return result.success unless result.success.nil?
+      raise result.o1 unless result.o1.nil?
+      raise result.o2 unless result.o2.nil?
+      raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'get_database_req_v2 failed: unknown result')
+    end
+
     def drop_database(name, deleteData, cascade)
       send_drop_database(name, deleteData, cascade)
       recv_drop_database()
@@ -189,6 +240,23 @@ module ThriftHiveMetastore
 
     def recv_drop_database()
       result = receive_message(Drop_database_result)
+      raise result.o1 unless result.o1.nil?
+      raise result.o2 unless result.o2.nil?
+      raise result.o3 unless result.o3.nil?
+      return
+    end
+
+    def drop_database_v2(name, deleteData, cascade, workspaceName)
+      send_drop_database_v2(name, deleteData, cascade, workspaceName)
+      recv_drop_database_v2()
+    end
+
+    def send_drop_database_v2(name, deleteData, cascade, workspaceName)
+      send_message('drop_database_v2', Drop_database_v2_args, :name => name, :deleteData => deleteData, :cascade => cascade, :workspaceName => workspaceName)
+    end
+
+    def recv_drop_database_v2()
+      result = receive_message(Drop_database_v2_result)
       raise result.o1 unless result.o1.nil?
       raise result.o2 unless result.o2.nil?
       raise result.o3 unless result.o3.nil?
@@ -211,6 +279,22 @@ module ThriftHiveMetastore
       raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'get_databases failed: unknown result')
     end
 
+    def get_databases_v2(pattern, workspaceName)
+      send_get_databases_v2(pattern, workspaceName)
+      return recv_get_databases_v2()
+    end
+
+    def send_get_databases_v2(pattern, workspaceName)
+      send_message('get_databases_v2', Get_databases_v2_args, :pattern => pattern, :workspaceName => workspaceName)
+    end
+
+    def recv_get_databases_v2()
+      result = receive_message(Get_databases_v2_result)
+      return result.success unless result.success.nil?
+      raise result.o1 unless result.o1.nil?
+      raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'get_databases_v2 failed: unknown result')
+    end
+
     def get_all_databases()
       send_get_all_databases()
       return recv_get_all_databases()
@@ -227,6 +311,22 @@ module ThriftHiveMetastore
       raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'get_all_databases failed: unknown result')
     end
 
+    def get_all_databases_v2(workspaceName)
+      send_get_all_databases_v2(workspaceName)
+      return recv_get_all_databases_v2()
+    end
+
+    def send_get_all_databases_v2(workspaceName)
+      send_message('get_all_databases_v2', Get_all_databases_v2_args, :workspaceName => workspaceName)
+    end
+
+    def recv_get_all_databases_v2()
+      result = receive_message(Get_all_databases_v2_result)
+      return result.success unless result.success.nil?
+      raise result.o1 unless result.o1.nil?
+      raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'get_all_databases_v2 failed: unknown result')
+    end
+
     def alter_database(dbname, db)
       send_alter_database(dbname, db)
       recv_alter_database()
@@ -238,6 +338,22 @@ module ThriftHiveMetastore
 
     def recv_alter_database()
       result = receive_message(Alter_database_result)
+      raise result.o1 unless result.o1.nil?
+      raise result.o2 unless result.o2.nil?
+      return
+    end
+
+    def alter_database_v2(dbname, db, workspaceName)
+      send_alter_database_v2(dbname, db, workspaceName)
+      recv_alter_database_v2()
+    end
+
+    def send_alter_database_v2(dbname, db, workspaceName)
+      send_message('alter_database_v2', Alter_database_v2_args, :dbname => dbname, :db => db, :workspaceName => workspaceName)
+    end
+
+    def recv_alter_database_v2()
+      result = receive_message(Alter_database_v2_result)
       raise result.o1 unless result.o1.nil?
       raise result.o2 unless result.o2.nil?
       return
@@ -3958,6 +4074,21 @@ module ThriftHiveMetastore
       write_result(result, oprot, 'create_database', seqid)
     end
 
+    def process_create_database_v2(seqid, iprot, oprot)
+      args = read_args(iprot, Create_database_v2_args)
+      result = Create_database_v2_result.new()
+      begin
+        @handler.create_database_v2(args.database, args.workspaceName)
+      rescue ::AlreadyExistsException => o1
+        result.o1 = o1
+      rescue ::InvalidObjectException => o2
+        result.o2 = o2
+      rescue ::MetaException => o3
+        result.o3 = o3
+      end
+      write_result(result, oprot, 'create_database_v2', seqid)
+    end
+
     def process_get_database(seqid, iprot, oprot)
       args = read_args(iprot, Get_database_args)
       result = Get_database_result.new()
@@ -3971,6 +4102,19 @@ module ThriftHiveMetastore
       write_result(result, oprot, 'get_database', seqid)
     end
 
+    def process_get_database_v2(seqid, iprot, oprot)
+      args = read_args(iprot, Get_database_v2_args)
+      result = Get_database_v2_result.new()
+      begin
+        result.success = @handler.get_database_v2(args.name, args.workspaceName)
+      rescue ::NoSuchObjectException => o1
+        result.o1 = o1
+      rescue ::MetaException => o2
+        result.o2 = o2
+      end
+      write_result(result, oprot, 'get_database_v2', seqid)
+    end
+
     def process_get_database_req(seqid, iprot, oprot)
       args = read_args(iprot, Get_database_req_args)
       result = Get_database_req_result.new()
@@ -3982,6 +4126,19 @@ module ThriftHiveMetastore
         result.o2 = o2
       end
       write_result(result, oprot, 'get_database_req', seqid)
+    end
+
+    def process_get_database_req_v2(seqid, iprot, oprot)
+      args = read_args(iprot, Get_database_req_v2_args)
+      result = Get_database_req_v2_result.new()
+      begin
+        result.success = @handler.get_database_req_v2(args.request, args.workspaceName)
+      rescue ::NoSuchObjectException => o1
+        result.o1 = o1
+      rescue ::MetaException => o2
+        result.o2 = o2
+      end
+      write_result(result, oprot, 'get_database_req_v2', seqid)
     end
 
     def process_drop_database(seqid, iprot, oprot)
@@ -3999,6 +4156,21 @@ module ThriftHiveMetastore
       write_result(result, oprot, 'drop_database', seqid)
     end
 
+    def process_drop_database_v2(seqid, iprot, oprot)
+      args = read_args(iprot, Drop_database_v2_args)
+      result = Drop_database_v2_result.new()
+      begin
+        @handler.drop_database_v2(args.name, args.deleteData, args.cascade, args.workspaceName)
+      rescue ::NoSuchObjectException => o1
+        result.o1 = o1
+      rescue ::InvalidOperationException => o2
+        result.o2 = o2
+      rescue ::MetaException => o3
+        result.o3 = o3
+      end
+      write_result(result, oprot, 'drop_database_v2', seqid)
+    end
+
     def process_get_databases(seqid, iprot, oprot)
       args = read_args(iprot, Get_databases_args)
       result = Get_databases_result.new()
@@ -4008,6 +4180,17 @@ module ThriftHiveMetastore
         result.o1 = o1
       end
       write_result(result, oprot, 'get_databases', seqid)
+    end
+
+    def process_get_databases_v2(seqid, iprot, oprot)
+      args = read_args(iprot, Get_databases_v2_args)
+      result = Get_databases_v2_result.new()
+      begin
+        result.success = @handler.get_databases_v2(args.pattern, args.workspaceName)
+      rescue ::MetaException => o1
+        result.o1 = o1
+      end
+      write_result(result, oprot, 'get_databases_v2', seqid)
     end
 
     def process_get_all_databases(seqid, iprot, oprot)
@@ -4021,6 +4204,17 @@ module ThriftHiveMetastore
       write_result(result, oprot, 'get_all_databases', seqid)
     end
 
+    def process_get_all_databases_v2(seqid, iprot, oprot)
+      args = read_args(iprot, Get_all_databases_v2_args)
+      result = Get_all_databases_v2_result.new()
+      begin
+        result.success = @handler.get_all_databases_v2(args.workspaceName)
+      rescue ::MetaException => o1
+        result.o1 = o1
+      end
+      write_result(result, oprot, 'get_all_databases_v2', seqid)
+    end
+
     def process_alter_database(seqid, iprot, oprot)
       args = read_args(iprot, Alter_database_args)
       result = Alter_database_result.new()
@@ -4032,6 +4226,19 @@ module ThriftHiveMetastore
         result.o2 = o2
       end
       write_result(result, oprot, 'alter_database', seqid)
+    end
+
+    def process_alter_database_v2(seqid, iprot, oprot)
+      args = read_args(iprot, Alter_database_v2_args)
+      result = Alter_database_v2_result.new()
+      begin
+        @handler.alter_database_v2(args.dbname, args.db, args.workspaceName)
+      rescue ::MetaException => o1
+        result.o1 = o1
+      rescue ::NoSuchObjectException => o2
+        result.o2 = o2
+      end
+      write_result(result, oprot, 'alter_database_v2', seqid)
     end
 
     def process_get_type(seqid, iprot, oprot)
@@ -7014,6 +7221,44 @@ module ThriftHiveMetastore
     ::Thrift::Struct.generate_accessors self
   end
 
+  class Create_database_v2_args
+    include ::Thrift::Struct, ::Thrift::Struct_Union
+    DATABASE = 1
+    WORKSPACENAME = 2
+
+    FIELDS = {
+      DATABASE => {:type => ::Thrift::Types::STRUCT, :name => 'database', :class => ::Database},
+      WORKSPACENAME => {:type => ::Thrift::Types::STRING, :name => 'workspaceName'}
+    }
+
+    def struct_fields; FIELDS; end
+
+    def validate
+    end
+
+    ::Thrift::Struct.generate_accessors self
+  end
+
+  class Create_database_v2_result
+    include ::Thrift::Struct, ::Thrift::Struct_Union
+    O1 = 1
+    O2 = 2
+    O3 = 3
+
+    FIELDS = {
+      O1 => {:type => ::Thrift::Types::STRUCT, :name => 'o1', :class => ::AlreadyExistsException},
+      O2 => {:type => ::Thrift::Types::STRUCT, :name => 'o2', :class => ::InvalidObjectException},
+      O3 => {:type => ::Thrift::Types::STRUCT, :name => 'o3', :class => ::MetaException}
+    }
+
+    def struct_fields; FIELDS; end
+
+    def validate
+    end
+
+    ::Thrift::Struct.generate_accessors self
+  end
+
   class Get_database_args
     include ::Thrift::Struct, ::Thrift::Struct_Union
     NAME = 1
@@ -7050,6 +7295,44 @@ module ThriftHiveMetastore
     ::Thrift::Struct.generate_accessors self
   end
 
+  class Get_database_v2_args
+    include ::Thrift::Struct, ::Thrift::Struct_Union
+    NAME = 1
+    WORKSPACENAME = 2
+
+    FIELDS = {
+      NAME => {:type => ::Thrift::Types::STRING, :name => 'name'},
+      WORKSPACENAME => {:type => ::Thrift::Types::STRING, :name => 'workspaceName'}
+    }
+
+    def struct_fields; FIELDS; end
+
+    def validate
+    end
+
+    ::Thrift::Struct.generate_accessors self
+  end
+
+  class Get_database_v2_result
+    include ::Thrift::Struct, ::Thrift::Struct_Union
+    SUCCESS = 0
+    O1 = 1
+    O2 = 2
+
+    FIELDS = {
+      SUCCESS => {:type => ::Thrift::Types::STRUCT, :name => 'success', :class => ::Database},
+      O1 => {:type => ::Thrift::Types::STRUCT, :name => 'o1', :class => ::NoSuchObjectException},
+      O2 => {:type => ::Thrift::Types::STRUCT, :name => 'o2', :class => ::MetaException}
+    }
+
+    def struct_fields; FIELDS; end
+
+    def validate
+    end
+
+    ::Thrift::Struct.generate_accessors self
+  end
+
   class Get_database_req_args
     include ::Thrift::Struct, ::Thrift::Struct_Union
     REQUEST = 1
@@ -7067,6 +7350,44 @@ module ThriftHiveMetastore
   end
 
   class Get_database_req_result
+    include ::Thrift::Struct, ::Thrift::Struct_Union
+    SUCCESS = 0
+    O1 = 1
+    O2 = 2
+
+    FIELDS = {
+      SUCCESS => {:type => ::Thrift::Types::STRUCT, :name => 'success', :class => ::Database},
+      O1 => {:type => ::Thrift::Types::STRUCT, :name => 'o1', :class => ::NoSuchObjectException},
+      O2 => {:type => ::Thrift::Types::STRUCT, :name => 'o2', :class => ::MetaException}
+    }
+
+    def struct_fields; FIELDS; end
+
+    def validate
+    end
+
+    ::Thrift::Struct.generate_accessors self
+  end
+
+  class Get_database_req_v2_args
+    include ::Thrift::Struct, ::Thrift::Struct_Union
+    REQUEST = 1
+    WORKSPACENAME = 2
+
+    FIELDS = {
+      REQUEST => {:type => ::Thrift::Types::STRUCT, :name => 'request', :class => ::GetDatabaseRequest},
+      WORKSPACENAME => {:type => ::Thrift::Types::STRING, :name => 'workspaceName'}
+    }
+
+    def struct_fields; FIELDS; end
+
+    def validate
+    end
+
+    ::Thrift::Struct.generate_accessors self
+  end
+
+  class Get_database_req_v2_result
     include ::Thrift::Struct, ::Thrift::Struct_Union
     SUCCESS = 0
     O1 = 1
@@ -7126,6 +7447,48 @@ module ThriftHiveMetastore
     ::Thrift::Struct.generate_accessors self
   end
 
+  class Drop_database_v2_args
+    include ::Thrift::Struct, ::Thrift::Struct_Union
+    NAME = 1
+    DELETEDATA = 2
+    CASCADE = 3
+    WORKSPACENAME = 4
+
+    FIELDS = {
+      NAME => {:type => ::Thrift::Types::STRING, :name => 'name'},
+      DELETEDATA => {:type => ::Thrift::Types::BOOL, :name => 'deleteData'},
+      CASCADE => {:type => ::Thrift::Types::BOOL, :name => 'cascade'},
+      WORKSPACENAME => {:type => ::Thrift::Types::STRING, :name => 'workspaceName'}
+    }
+
+    def struct_fields; FIELDS; end
+
+    def validate
+    end
+
+    ::Thrift::Struct.generate_accessors self
+  end
+
+  class Drop_database_v2_result
+    include ::Thrift::Struct, ::Thrift::Struct_Union
+    O1 = 1
+    O2 = 2
+    O3 = 3
+
+    FIELDS = {
+      O1 => {:type => ::Thrift::Types::STRUCT, :name => 'o1', :class => ::NoSuchObjectException},
+      O2 => {:type => ::Thrift::Types::STRUCT, :name => 'o2', :class => ::InvalidOperationException},
+      O3 => {:type => ::Thrift::Types::STRUCT, :name => 'o3', :class => ::MetaException}
+    }
+
+    def struct_fields; FIELDS; end
+
+    def validate
+    end
+
+    ::Thrift::Struct.generate_accessors self
+  end
+
   class Get_databases_args
     include ::Thrift::Struct, ::Thrift::Struct_Union
     PATTERN = 1
@@ -7143,6 +7506,42 @@ module ThriftHiveMetastore
   end
 
   class Get_databases_result
+    include ::Thrift::Struct, ::Thrift::Struct_Union
+    SUCCESS = 0
+    O1 = 1
+
+    FIELDS = {
+      SUCCESS => {:type => ::Thrift::Types::LIST, :name => 'success', :element => {:type => ::Thrift::Types::STRING}},
+      O1 => {:type => ::Thrift::Types::STRUCT, :name => 'o1', :class => ::MetaException}
+    }
+
+    def struct_fields; FIELDS; end
+
+    def validate
+    end
+
+    ::Thrift::Struct.generate_accessors self
+  end
+
+  class Get_databases_v2_args
+    include ::Thrift::Struct, ::Thrift::Struct_Union
+    PATTERN = 1
+    WORKSPACENAME = 2
+
+    FIELDS = {
+      PATTERN => {:type => ::Thrift::Types::STRING, :name => 'pattern'},
+      WORKSPACENAME => {:type => ::Thrift::Types::STRING, :name => 'workspaceName'}
+    }
+
+    def struct_fields; FIELDS; end
+
+    def validate
+    end
+
+    ::Thrift::Struct.generate_accessors self
+  end
+
+  class Get_databases_v2_result
     include ::Thrift::Struct, ::Thrift::Struct_Union
     SUCCESS = 0
     O1 = 1
@@ -7193,6 +7592,40 @@ module ThriftHiveMetastore
     ::Thrift::Struct.generate_accessors self
   end
 
+  class Get_all_databases_v2_args
+    include ::Thrift::Struct, ::Thrift::Struct_Union
+    WORKSPACENAME = 1
+
+    FIELDS = {
+      WORKSPACENAME => {:type => ::Thrift::Types::STRING, :name => 'workspaceName'}
+    }
+
+    def struct_fields; FIELDS; end
+
+    def validate
+    end
+
+    ::Thrift::Struct.generate_accessors self
+  end
+
+  class Get_all_databases_v2_result
+    include ::Thrift::Struct, ::Thrift::Struct_Union
+    SUCCESS = 0
+    O1 = 1
+
+    FIELDS = {
+      SUCCESS => {:type => ::Thrift::Types::LIST, :name => 'success', :element => {:type => ::Thrift::Types::STRING}},
+      O1 => {:type => ::Thrift::Types::STRUCT, :name => 'o1', :class => ::MetaException}
+    }
+
+    def struct_fields; FIELDS; end
+
+    def validate
+    end
+
+    ::Thrift::Struct.generate_accessors self
+  end
+
   class Alter_database_args
     include ::Thrift::Struct, ::Thrift::Struct_Union
     DBNAME = 1
@@ -7212,6 +7645,44 @@ module ThriftHiveMetastore
   end
 
   class Alter_database_result
+    include ::Thrift::Struct, ::Thrift::Struct_Union
+    O1 = 1
+    O2 = 2
+
+    FIELDS = {
+      O1 => {:type => ::Thrift::Types::STRUCT, :name => 'o1', :class => ::MetaException},
+      O2 => {:type => ::Thrift::Types::STRUCT, :name => 'o2', :class => ::NoSuchObjectException}
+    }
+
+    def struct_fields; FIELDS; end
+
+    def validate
+    end
+
+    ::Thrift::Struct.generate_accessors self
+  end
+
+  class Alter_database_v2_args
+    include ::Thrift::Struct, ::Thrift::Struct_Union
+    DBNAME = 1
+    DB = 2
+    WORKSPACENAME = 3
+
+    FIELDS = {
+      DBNAME => {:type => ::Thrift::Types::STRING, :name => 'dbname'},
+      DB => {:type => ::Thrift::Types::STRUCT, :name => 'db', :class => ::Database},
+      WORKSPACENAME => {:type => ::Thrift::Types::STRING, :name => 'workspaceName'}
+    }
+
+    def struct_fields; FIELDS; end
+
+    def validate
+    end
+
+    ::Thrift::Struct.generate_accessors self
+  end
+
+  class Alter_database_v2_result
     include ::Thrift::Struct, ::Thrift::Struct_Union
     O1 = 1
     O2 = 2
