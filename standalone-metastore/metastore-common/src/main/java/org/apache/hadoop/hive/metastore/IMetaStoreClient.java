@@ -1575,7 +1575,7 @@ public interface IMetaStoreClient {
    * @throws MetaException
    * @throws NoSuchObjectException
    * @throws TException
-   * @see org.apache.hadoop.hive.metastore.api.ThriftHiveMultitenantMetastore.Iface#create_table(org.apache.hadoop.hive.metastore.api.CreateTableRequest)
+   * @see org.apache.hadoop.hive.metastore.api.ThriftHiveMetastore.Iface#create_table(org.apache.hadoop.hive.metastore.api.CreateTableRequest)
    */
 
   void createTable(Table tbl) throws AlreadyExistsException,
