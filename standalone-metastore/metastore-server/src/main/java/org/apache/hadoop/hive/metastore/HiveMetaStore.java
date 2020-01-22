@@ -157,6 +157,7 @@ import org.apache.hadoop.hive.metastore.metrics.JvmPauseMonitor;
 import org.apache.hadoop.hive.metastore.metrics.Metrics;
 import org.apache.hadoop.hive.metastore.metrics.MetricsConstants;
 import org.apache.hadoop.hive.metastore.metrics.PerfLogger;
+import org.apache.hadoop.hive.metastore.mocks.MockMetastoreDBConfigurationReader;
 import org.apache.hadoop.hive.metastore.partition.spec.PartitionSpecProxy;
 import org.apache.hadoop.hive.metastore.security.HadoopThriftAuthBridge;
 import org.apache.hadoop.hive.metastore.security.MetastoreDelegationTokenManager;
@@ -262,6 +263,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     private PartitionExpressionProxy expressionProxy;
     private StorageSchemaReader storageSchemaReader;
     private IMetaStoreMetadataTransformer transformer;
+    private IMetastoreDBConfigurationReader metastoreDBConfigurationReader = new MockMetastoreDBConfigurationReader();
 
     // Variables for metrics
     // Package visible so that HMSMetricsListener can see them.
@@ -749,6 +751,13 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       return conf;
     }
 
+    @Override
+    public Configuration getConf(final String workspaceName) {
+      Configuration conf = getConf();
+      Configuration workspaceDBConf = metastoreDBConfigurationReader.readConfiguration(workspaceName, conf);
+      return workspaceDBConf;
+    }
+
     private Map<String, String> getModifiedConf() {
       Map<String, String> modifiedConf = threadLocalModifiedConfig.get();
       if (modifiedConf == null) {
@@ -811,6 +820,18 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     @Override
     public RawStore getMS() throws MetaException {
       Configuration conf = getConf();
+      return getMSForConf(conf);
+    }
+
+    /**
+     * Get a cached RawStore.
+     *
+     * @return the cached RawStore
+     * @throws MetaException
+     */
+    @Override
+    public RawStore getMS(final String workspaceName) throws MetaException {
+      Configuration conf = getConf(workspaceName);
       return getMSForConf(conf);
     }
 
@@ -1496,11 +1517,112 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       }
     }
 
+    // Assumes that the catalog has already been set.
+    private void create_database_core_v2(RawStore ms, final Database db, final String workspaceName)
+            throws AlreadyExistsException, InvalidObjectException, MetaException {
+      if (!MetaStoreUtils.validateName(db.getName(), null)) {
+        throw new InvalidObjectException(db.getName() + " is not a valid database name");
+      }
+
+      Catalog cat = null;
+      try {
+        cat = getMS(workspaceName).getCatalog(db.getCatalogName());
+      } catch (NoSuchObjectException e) {
+        LOG.error("No such catalog " + db.getCatalogName());
+        throw new InvalidObjectException("No such catalog " + db.getCatalogName());
+      }
+      Path dbPath = wh.determineDatabasePath(cat, db);
+      db.setLocationUri(dbPath.toString());
+      if (db.getOwnerName() == null){
+        try {
+          db.setOwnerName(SecurityUtils.getUGI().getShortUserName());
+        }catch (Exception e){
+          LOG.warn("Failed to get owner name for create database operation.", e);
+        }
+      }
+      long time = System.currentTimeMillis()/1000;
+      db.setCreateTime((int) time);
+      boolean success = false;
+      boolean madeDir = false;
+      boolean isReplicated = isDbReplicationTarget(db);
+      Map<String, String> transactionalListenersResponses = Collections.emptyMap();
+      try {
+        firePreEvent(new PreCreateDatabaseEvent(db, this));
+        if (!wh.isDir(dbPath)) {
+          LOG.debug("Creating database path " + dbPath);
+          if (!wh.mkdirs(dbPath)) {
+            throw new MetaException("Unable to create database path " + dbPath +
+                                            ", failed to create database " + db.getName());
+          }
+          madeDir = true;
+        }
+
+        ms.openTransaction();
+        ms.createDatabase(db);
+
+        if (!transactionalListeners.isEmpty()) {
+          transactionalListenersResponses =
+                  MetaStoreListenerNotifier.notifyEvent(transactionalListeners,
+                                                        EventType.CREATE_DATABASE,
+                                                        new CreateDatabaseEvent(db, true, this, isReplicated));
+        }
+
+        success = ms.commitTransaction();
+      } finally {
+        if (!success) {
+          ms.rollbackTransaction();
+          if (madeDir) {
+            wh.deleteDir(dbPath, true, db);
+          }
+        }
+
+        if (!listeners.isEmpty()) {
+          MetaStoreListenerNotifier.notifyEvent(listeners,
+                                                EventType.CREATE_DATABASE,
+                                                new CreateDatabaseEvent(db, success, this, isReplicated),
+                                                null,
+                                                transactionalListenersResponses, ms);
+        }
+      }
+    }
+
     @Override
     public void create_database_v2(final Database db, final String workspaceName)
         throws AlreadyExistsException, InvalidObjectException, MetaException {
       startFunction("create_database_v2", ": " + db.toString());
-      endFunction("create_database_v2", true, null);
+      boolean success = false;
+      Exception ex = null;
+      if (!db.isSetCatalogName()) {
+        db.setCatalogName(getDefaultCatalog(conf));
+      }
+      try {
+        try {
+          if (null != get_database_core_v2(db.getCatalogName(), db.getName(), workspaceName)) {
+            throw new AlreadyExistsException("Database " + db.getName() + " already exists");
+          }
+        } catch (NoSuchObjectException e) {
+          // expected
+        }
+
+        if (TEST_TIMEOUT_ENABLED) {
+          try {
+            Thread.sleep(TEST_TIMEOUT_VALUE);
+          } catch (InterruptedException e) {
+            // do nothing
+          }
+          Deadline.checkTimeout();
+        }
+        create_database_core_v2(getMS(workspaceName), db, workspaceName);
+        success = true;
+      } catch (MetaException | InvalidObjectException | AlreadyExistsException e) {
+        ex = e;
+        throw e;
+      } catch (Exception e) {
+        ex = e;
+        throw newMetaException(e);
+      } finally {
+        endFunction("create_database_v2", success, ex);
+      }
     }
 
     @Override
@@ -1515,6 +1637,17 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     }
 
     @Override
+    public Database get_database_v2(final String name, final String workspaceName)
+            throws NoSuchObjectException, MetaException {
+      GetDatabaseRequest request = new GetDatabaseRequest();
+      String[] parsedDbName = parseDbName(name, conf);
+      request.setName(parsedDbName[DB_NAME]);
+      if (parsedDbName[CAT_NAME] != null)
+        request.setCatalogName(parsedDbName[CAT_NAME]);
+      return get_database_req_v2(request, workspaceName);
+    }
+
+    @Override
     public Database get_database_core(String catName, final String name) throws NoSuchObjectException, MetaException {
       Database db = null;
       if (name == null) {
@@ -1522,6 +1655,23 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       }
       try {
         db = getMS().getDatabase(catName, name);
+      } catch (MetaException | NoSuchObjectException e) {
+        throw e;
+      } catch (Exception e) {
+        assert (e instanceof RuntimeException);
+        throw (RuntimeException) e;
+      }
+      return db;
+    }
+
+    @Override
+    public Database get_database_core_v2(String catName, final String name, final String workspaceName) throws NoSuchObjectException, MetaException {
+      Database db = null;
+      if (name == null) {
+        throw new MetaException("Database name cannot be null.");
+      }
+      try {
+        db = getMS(workspaceName).getDatabase(catName, name);
       } catch (MetaException | NoSuchObjectException e) {
         throw e;
       } catch (Exception e) {
@@ -1555,6 +1705,34 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         throw (RuntimeException) e;
       } finally {
         endFunction("get_database", db != null, ex);
+      }
+      return db;
+    }
+
+    @Override
+    public Database get_database_req_v2(GetDatabaseRequest request, String workspaceName) throws NoSuchObjectException, MetaException {
+      startFunction("get_database_v2", ": " + request.getName());
+      Database db = null;
+      Exception ex = null;
+      if (request.getName() == null) {
+        throw new MetaException("Database name cannot be null.");
+      }
+      List<String> processorCapabilities = request.getProcessorCapabilities();
+      String processorId = request.getProcessorIdentifier();
+      try {
+        db = getMS(workspaceName).getDatabase(request.getCatalogName(), request.getName());
+        firePreEvent(new PreReadDatabaseEvent(db, this));
+        if (processorCapabilities != null && transformer != null) {
+          db = transformer.transformDatabase(db, processorCapabilities, processorId);
+        }
+      } catch (MetaException | NoSuchObjectException e) {
+        ex = e;
+        throw e;
+      } catch (Exception e) {
+        assert (e instanceof RuntimeException);
+        throw (RuntimeException) e;
+      } finally {
+        endFunction("get_database_v2", db != null, ex);
       }
       return db;
     }
@@ -1615,6 +1793,65 @@ public class HiveMetaStore extends ThriftHiveMetastore {
               transactionalListenersResponses, ms);
         }
         endFunction("alter_database", success, ex);
+      }
+    }
+
+    @Override
+    public void alter_database_v2(final String dbName, final Database newDB, final String workspaceName) throws TException {
+      startFunction("alter_database_v2 " + dbName);
+      boolean success = false;
+      Exception ex = null;
+      RawStore ms = getMS(workspaceName);
+      Database oldDB = null;
+      Map<String, String> transactionalListenersResponses = Collections.emptyMap();
+
+      // Perform the same URI normalization as create_database_core.
+      if (newDB.getLocationUri() != null) {
+        newDB.setLocationUri(wh.getDnsPath(new Path(newDB.getLocationUri())).toString());
+      }
+
+      String[] parsedDbName = parseDbName(dbName, conf);
+
+      // We can replicate into an empty database, in which case newDB will have indication that
+      // it's target of replication but not oldDB. But replication flow will never alter a
+      // database so that oldDB indicates that it's target or replication but not the newDB. So,
+      // relying solely on newDB to check whether the database is target of replication works.
+      boolean isReplicated = isDbReplicationTarget(newDB);
+      try {
+        oldDB = get_database_core_v2(parsedDbName[CAT_NAME], parsedDbName[DB_NAME], workspaceName);
+        if (oldDB == null) {
+          throw new MetaException("Could not alter database \"" + parsedDbName[DB_NAME] +
+                                          "\". Could not retrieve old definition.");
+        }
+        firePreEvent(new PreAlterDatabaseEvent(oldDB, newDB, this));
+
+        ms.openTransaction();
+        ms.alterDatabase(parsedDbName[CAT_NAME], parsedDbName[DB_NAME], newDB);
+
+        if (!transactionalListeners.isEmpty()) {
+          transactionalListenersResponses =
+                  MetaStoreListenerNotifier.notifyEvent(transactionalListeners,
+                                                        EventType.ALTER_DATABASE,
+                                                        new AlterDatabaseEvent(oldDB, newDB, true, this, isReplicated));
+        }
+
+        success = ms.commitTransaction();
+      } catch (MetaException|NoSuchObjectException e) {
+        ex = e;
+        throw e;
+      } finally {
+        if (!success) {
+          ms.rollbackTransaction();
+        }
+
+        if ((null != oldDB) && (!listeners.isEmpty())) {
+          MetaStoreListenerNotifier.notifyEvent(listeners,
+                                                EventType.ALTER_DATABASE,
+                                                new AlterDatabaseEvent(oldDB, newDB, success, this, isReplicated),
+                                                null,
+                                                transactionalListenersResponses, ms);
+        }
+        endFunction("alter_database_v2", success, ex);
       }
     }
 
@@ -1829,6 +2066,34 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       }
     }
 
+    @Override
+    public void drop_database_v2(final String dbName, final boolean deleteData, final boolean cascade, final String workspaceName)
+            throws NoSuchObjectException, InvalidOperationException, MetaException {
+      startFunction("drop_database_v2", ": " + dbName);
+      String[] parsedDbName = parseDbName(dbName, conf);
+      if (DEFAULT_CATALOG_NAME.equalsIgnoreCase(parsedDbName[CAT_NAME]) &&
+              DEFAULT_DATABASE_NAME.equalsIgnoreCase(parsedDbName[DB_NAME])) {
+        endFunction("drop_database_v2", false, null);
+        throw new MetaException("Can not drop " + DEFAULT_DATABASE_NAME + " database in catalog "
+                                        + DEFAULT_CATALOG_NAME);
+      }
+
+      boolean success = false;
+      Exception ex = null;
+      try {
+        drop_database_core(getMS(workspaceName), parsedDbName[CAT_NAME], parsedDbName[DB_NAME], deleteData,
+                           cascade);
+        success = true;
+      } catch (NoSuchObjectException|InvalidOperationException|MetaException e) {
+        ex = e;
+        throw e;
+      } catch (Exception e) {
+        ex = e;
+        throw newMetaException(e);
+      } finally {
+        endFunction("drop_database_v2", success, ex);
+      }
+    }
 
     @Override
     public List<String> get_databases(final String pattern) throws MetaException {
@@ -1858,9 +2123,42 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     }
 
     @Override
+    public List<String> get_databases_v2(final String pattern, final String workspaceName) throws MetaException {
+      startFunction("get_databases_v2", ": " + pattern);
+
+      String[] parsedDbNamed = parseDbName(pattern, conf);
+      List<String> ret = null;
+      Exception ex = null;
+      try {
+        if (parsedDbNamed[DB_NAME] == null) {
+          ret = getMS(workspaceName).getAllDatabases(parsedDbNamed[CAT_NAME]);
+          ret = FilterUtils.filterDbNamesIfEnabled(isServerFilterEnabled, filterHook, ret);
+        } else {
+          ret = getMS(workspaceName).getDatabases(parsedDbNamed[CAT_NAME], parsedDbNamed[DB_NAME]);
+          ret = FilterUtils.filterDbNamesIfEnabled(isServerFilterEnabled, filterHook, ret);
+        }
+      } catch (MetaException e) {
+        ex = e;
+        throw e;
+      } catch (Exception e) {
+        ex = e;
+        throw newMetaException(e);
+      } finally {
+        endFunction("get_databases_v2", ret != null, ex);
+      }
+      return ret;
+    }
+
+    @Override
     public List<String> get_all_databases() throws MetaException {
       // get_databases filters results already. No need to filter here
       return get_databases(MetaStoreUtils.prependCatalogToDbName(null, null, conf));
+    }
+
+    @Override
+    public List<String> get_all_databases_v2(final String workspaceName) throws MetaException {
+      // get_databases filters results already. No need to filter here
+      return get_databases_v2(MetaStoreUtils.prependCatalogToDbName(null, null, conf), workspaceName);
     }
 
     private void create_type_core(final RawStore ms, final Type type)
