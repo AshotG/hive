@@ -301,6 +301,14 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       threadLocalMS.remove();
     }
 
+    private static final ThreadLocal<String> threadLocalWorkspaceName =
+        new ThreadLocal<String>() {
+          @Override
+          protected String initialValue() {
+            return null;
+          }
+        };
+
     // Thread local configuration is needed as many threads could make changes
     // to the conf using the connection hook
     private static final ThreadLocal<Configuration> threadLocalConf =
@@ -748,6 +756,12 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         conf = new Configuration(this.conf);
         threadLocalConf.set(conf);
       }
+
+      String workspaceName = threadLocalWorkspaceName.get();
+      if (workspaceName != null && !workspaceName.isEmpty()) {
+        conf = metastoreDBConfigurationReader.readConfiguration(workspaceName, conf);
+      }
+
       return conf;
     }
 
@@ -1639,12 +1653,16 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     @Override
     public Database get_database_v2(final String name, final String workspaceName)
             throws NoSuchObjectException, MetaException {
+      threadLocalWorkspaceName.set(workspaceName);
+      return get_database(name);
+      /*
       GetDatabaseRequest request = new GetDatabaseRequest();
       String[] parsedDbName = parseDbName(name, conf);
       request.setName(parsedDbName[DB_NAME]);
       if (parsedDbName[CAT_NAME] != null)
         request.setCatalogName(parsedDbName[CAT_NAME]);
       return get_database_req_v2(request, workspaceName);
+      */
     }
 
     @Override
