@@ -23,6 +23,19 @@ public class MockMetastoreDBConfigurationReader implements IMetastoreDBConfigura
 
             return result;
         }
+
+        case "test_workspace_wont_work": {
+            // Clone, replace parameters and return.
+            Configuration result = new Configuration(defaultConfiguration);
+
+            result.set("javax.jdo.option.ConnectionDriverName", "com.microsoft.sqlserver.jdbc.SQLServerDriver");
+            result.set("javax.jdo.option.ConnectionURL", "jdbc:sqlserver://random:1433;database=RANDOM;");
+            result.set("javax.jdo.option.ConnectionUserName", "someone");
+            result.set("javax.jdo.option.ConnectionPassword", "something");
+
+            return result;
+        }
+
         default:
             return defaultConfiguration;
         }
