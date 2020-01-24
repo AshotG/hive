@@ -35,7 +35,7 @@ import org.apache.hadoop.hive.metastore.utils.MetaStoreUtils;
  * called by internal classes but that are not part of the thrift interface.
  */
 @InterfaceAudience.Private
-public interface IHMSHandler extends ThriftHiveMetastore.Iface, IMultitenantConfigurable {
+public interface IHMSHandler extends ThriftHiveMetastore.Iface, Configurable {
 
   void init() throws MetaException;
 
@@ -51,14 +51,6 @@ public interface IHMSHandler extends ThriftHiveMetastore.Iface, IMultitenantConf
    * @throws MetaException if the creation of a new RawStore object is necessary but fails.
    */
   RawStore getMS() throws MetaException;
-
-  /**
-   * Get a reference to the underlying RawStore for the workspace.
-   * @param workspaceName the name of a workspace.
-   * @return the RawStore instance.
-   * @throws MetaException if the creation of a new RawStore object is necessary but fails.
-   */
-  RawStore getMS(final String workspaceName) throws MetaException;
 
   /**
    * Get a reference to the underlying TxnStore.
@@ -83,19 +75,6 @@ public interface IHMSHandler extends ThriftHiveMetastore.Iface, IMultitenantConf
    */
   Database get_database_core(final String catName, final String name)
       throws NoSuchObjectException, MetaException;
-
-  /**
-   * Equivalent to get_database, but does not write to audit logs, or fire pre-event listeners.
-   * Meant to be used for internal hive classes that don't use the thrift interface.
-   * @param catName catalog name
-   * @param name database name
-   * @param workspaceName workspace name
-   * @return database object
-   * @throws NoSuchObjectException If the database does not exist.
-   * @throws MetaException If another error occurs.
-   */
-  Database get_database_core_v2(final String catName, final String name, final String workspaceName)
-          throws NoSuchObjectException, MetaException;
 
   /**
    * Equivalent of get_table, but does not log audits and fire pre-event listener.
